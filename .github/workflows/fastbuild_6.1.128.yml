@@ -658,7 +658,7 @@ jobs:
         run: |
           cd kernel_workspace
           git clone https://github.com/cctv18/AnyKernel3 --depth=1
-          sed -i 's/cctv18/Lxyao/g' AnyKernel3/anykernel.sh
+          sed -i 's/cctv18/Lxyao/g; s/Coolapk/Github/g' AnyKernel3/anykernel.sh
           rm -rf ./AnyKernel3/.git
           cd AnyKernel3
           cp ../common/out/arch/arm64/boot/Image ./Image
