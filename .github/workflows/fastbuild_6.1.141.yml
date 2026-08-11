@@ -4,9 +4,9 @@ env:
   TZ: Asia/Shanghai
   ANDROID_VERSION: 'android14'
   KERNEL_VERSION: '6.1'
-  SUB_VERSION: '141'
-  KERNEL_NAME: 'android14-11-o-gca13bffobf09'
-  CCACHE_KEY: ccache-ecsv4-6.1.141
+  SUB_VERSION: ${{ github.event.inputs.sub_version }}
+  KERNEL_NAME: ${{ github.event.inputs.kernel_name }}
+  CCACHE_KEY: ccache-ecsv4-6.1.${{ github.event.inputs.sub_version }}
 
 on:
   workflow_dispatch:
@@ -95,6 +95,19 @@ on:
         required: false
         type: string
         default: ''
+      sub_version:
+        description: '内核子版本号(即 uname -r 中的PatchLevel，如选145则构建6.1.145，可跨版本刷入)'
+        required: true
+        type: choice
+        default: '141'
+        options:
+          - '141'
+          - '145'
+      kernel_name:
+        description: 'KMI后缀(从设备uname -r提取，如android14-11-o-gca13bffobf09，即版本号后面的全部)'
+        required: false
+        type: string
+        default: 'android14-11-o-gca13bffobf09'
 
 jobs:
   build:
@@ -154,6 +167,8 @@ jobs:
             sed -i 's/ -dirty//g' "$f"
             sed -i '$i res=$(echo "$res" | sed '\''s/-dirty//g'\'')' "$f"
           done
+          echo "正在将内核子版本号修改为 ${{ env.SUB_VERSION }} ..."
+          sed -i "s/^SUBLEVEL = .*/SUBLEVEL = ${{ env.SUB_VERSION }}/" common/Makefile
 
       - name: 配置ccache目录
         run: |
