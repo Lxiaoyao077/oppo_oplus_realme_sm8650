@@ -309,7 +309,15 @@ jobs:
             echo "正在为原版 KernelSU (Lxiaoyao077/KernelSU)添加补丁..."
             cp ./susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
             cd ./KernelSU
-            patch -p1 < 10_enable_susfs_for_ksu.patch || true
+            # susfs4oki 的 KSU 补丁按旧版 KernelSU 结构编写，新版结构可能无法干净应用；
+            # 部分应用会把 kernel 源码改坏导致编译失败，失败时回滚到 clone 的干净状态
+            if patch -p1 < 10_enable_susfs_for_ksu.patch; then
+              echo "[susfs] KernelSU 补丁应用成功"
+            else
+              echo "[susfs] KernelSU 补丁应用失败，回滚到干净源码（内核仍可编译，但无 SUSFS for KSU）"
+              git checkout -- . 2>/dev/null || true
+              git clean -fd 2>/dev/null || true
+            fi
           fi
           
       - name: 应用lz4 1.10.0 & zstd 1.5.7补丁
