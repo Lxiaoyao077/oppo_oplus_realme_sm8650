@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       ksu_type:
-        description: 'KernelSU分支(ReSukiSU/SukiSU Ultra/KernelSU Next/KSU(原版)/无内置KSU,默认ReSukiSU)'
+        description: 'KernelSU分支(ReSukiSU/SukiSU Ultra/KernelSU Next/KSU(原版)/KoWSU/无内置KSU,默认ReSukiSU)'
         required: true
         type: choice
         default: 'resukisu'
@@ -21,6 +21,7 @@ on:
           - 'sukisu'
           - 'ksunext'
           - 'ksu'
+          - 'kowsu'
           - 'none'
       susfs_enable:
         description: '是否开启susfs(用于增强隐藏环境挂载功能; 可能轻微增加耗电，上游更新导致不稳定时或不需要可关闭)'
@@ -283,6 +284,13 @@ jobs:
             echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
             echo "ksuver=$KSU_VERSION" >> $GITHUB_OUTPUT
             sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Kbuild
+          elif [[ ${{ github.event.inputs.ksu_type }} == "kowsu" ]]; then
+            echo "正在配置 KoWSU (KOWX712/KernelSU)..."
+            curl -LSs "https://raw.githubusercontent.com/KOWX712/KernelSU/refs/heads/master/kernel/setup.sh" | bash -s master
+            cd ./KernelSU
+            KSU_VERSION=$(expr $(git rev-list --count master) + 30000)
+            echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+            echo "ksuver=$KSU_VERSION" >> $GITHUB_OUTPUT
           else
             echo "已选择无内置KernelSU模式，跳过KernelSU配置..."
           fi
@@ -305,7 +313,7 @@ jobs:
           else
             echo "已选择无内置KernelSU模式，跳过susfs配置..."
           fi
-          if [[ ${{ github.event.inputs.ksu_type }} == "ksu" ]]; then
+          if [[ ${{ github.event.inputs.ksu_type }} == "ksu" || ${{ github.event.inputs.ksu_type }} == "kowsu" ]]; then
             echo "正在为原版 KernelSU (Lxiaoyao077/KernelSU)添加补丁..."
             cp ./susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
             cd ./KernelSU
@@ -683,6 +691,8 @@ jobs:
             KSU_TYPENAME="KSUNext"
           elif [[ ${{ github.event.inputs.ksu_type }} == "ksu" ]]; then
             KSU_TYPENAME="KSU"
+          elif [[ ${{ github.event.inputs.ksu_type }} == "kowsu" ]]; then
+            KSU_TYPENAME="KoWSU"
           else
             KSU_TYPENAME="none"
           fi
@@ -783,6 +793,8 @@ jobs:
             KSU_TYPENAME="KernelSU Next"
           elif [[ ${{ github.event.inputs.ksu_type }} == "ksu" ]]; then
             KSU_TYPENAME="KernelSU (Official)"
+          elif [[ ${{ github.event.inputs.ksu_type }} == "kowsu" ]]; then
+            KSU_TYPENAME="KoWSU"
           else
             KSU_TYPENAME="无内置KSU"
           fi
@@ -813,6 +825,7 @@ jobs:
           - SukiSU Ultra管理器下载：[SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra/releases)
           - KernelSU Next管理器下载：[KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next/releases)
           - KSU原版管理器下载：[KernelSU](https://github.com/Lxiaoyao077/KernelSU/releases)
+          - KoWSU管理器下载：[KoWSU](https://github.com/KOWX712/KernelSU/releases)
           
           ### ⏫️ 更新内容：
           - 更新${{ env.KSU_TYPENAME }}至最新版本（${{ needs.build.outputs.ksuver }}）
